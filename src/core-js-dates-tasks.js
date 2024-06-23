@@ -161,8 +161,11 @@ function getCountDaysOnPeriod(dateStart, dateEnd) {
  * '2024-02-02', { start: '2024-02-02', end: '2024-03-02' } => true
  * '2024-02-10', { start: '2024-02-02', end: '2024-03-02' } => true
  */
-function isDateInPeriod(/* date, period */) {
-  throw new Error('Not implemented');
+function isDateInPeriod(date, period) {
+  const s = new Date(period.start).getTime();
+  const e = new Date(period.end).getTime();
+  const msDate = new Date(date).getTime();
+  return msDate >= s && msDate <= e;
 }
 
 /**
@@ -176,8 +179,17 @@ function isDateInPeriod(/* date, period */) {
  * '1999-01-05T02:20:00.000Z' => '1/5/1999, 2:20:00 AM'
  * '2010-12-15T22:59:00.000Z' => '12/15/2010, 10:59:00 PM'
  */
-function formatDate(/* date */) {
-  throw new Error('Not implemented');
+function formatDate(date) {
+  const curDate = new Date(date);
+  const month = curDate.getUTCMonth() + 1;
+  const day = curDate.getUTCDate();
+  const year = curDate.getUTCFullYear();
+  let h = curDate.getUTCHours();
+  const m = String(curDate.getUTCMinutes()).padStart(2, '0');
+  const s = String(curDate.getUTCSeconds()).padStart(2, '0');
+  const halfADay = h > 11 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  return `${month}/${day}/${year}, ${h}:${m}:${s} ${halfADay}`;
 }
 
 /**
@@ -286,8 +298,25 @@ function getQuarter(date) {
  * { start: '01-01-2024', end: '15-01-2024' }, 1, 3 => ['01-01-2024', '05-01-2024', '09-01-2024', '13-01-2024']
  * { start: '01-01-2024', end: '10-01-2024' }, 1, 1 => ['01-01-2024', '03-01-2024', '05-01-2024', '07-01-2024', '09-01-2024']
  */
-function getWorkSchedule(/* period, countWorkDays, countOffDays */) {
-  throw new Error('Not implemented');
+function getWorkSchedule(period, countWorkDays, countOffDays) {
+  const [startDay, startMonth, startYear] = period.start.split('-');
+  const [endDay, endMonth, endYear] = period.end.split('-');
+  const startDate = new Date(startYear, startMonth - 1, startDay);
+  const endDate = new Date(endYear, endMonth - 1, endDay);
+  const schedule = [];
+  while (startDate.getTime() <= endDate.getTime()) {
+    for (let i = 0; i < countWorkDays; i += 1) {
+      if (startDate.getTime() > endDate.getTime()) break;
+      const workDay = String(startDate.getDate()).padStart(2, '0');
+      const workMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+      const workYear = startDate.getFullYear();
+      const scheduleWorkDate = `${workDay}-${workMonth}-${workYear}`;
+      schedule.push(scheduleWorkDate);
+      startDate.setDate(startDate.getDate() + 1);
+    }
+    startDate.setDate(startDate.getDate() + countOffDays);
+  }
+  return schedule;
 }
 
 /**
